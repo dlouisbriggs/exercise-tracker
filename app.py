@@ -1,9 +1,10 @@
+from flask import Flask, render_template, request, redirect
 import sqlite3
 import os
 
 app = Flask(__name__)
 
-# Function to create database if it doesn't exist
+# Function to create the database if it doesn't exist
 def init_db():
     with sqlite3.connect("exercise.db") as conn:
         conn.execute("""
@@ -14,85 +15,63 @@ def init_db():
         )""")
         conn.commit()
 
-# Ensure the database and table exist before starting the app
+# Ensure the database exists before starting the app
 init_db()
 
+# Sample exercises (Run this only once to add default exercises)
+def add_default_exercises():
+    with sqlite3.connect("exercise.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM exercises")
+        count = cursor.fetchone()[0]
+        if count == 0:  # If no exercises exist, add them
+            exercises = [
+                ("Chest Press w/ Step (M) R30", 0),
+                ("Tension Curls (UF) R30", 0),
+                ("Chest Fly w/ Step (M) R30", 0),
+                ("Upright Row (Bar) B50", 0),
+                ("Hammer Ten Curl (UF) R30", 0),
+                ("Shoulder Shrug (Bar) B50", 0),
+                ("Tension Press (M) R30", 0),
+                ("Rev Tension Curl (UF) R30", 0),
+                ("Ntrl Grip Tension Pr (M) R30", 0),
+                ("Shoulder Press (Bar) B50", 0),
+                ("Low Tension Kickback (L) R30", 0),
+                ("Tension Front Raises (L) Y10", 0)
+            ]
+            conn.executemany("INSERT INTO exercises (name, completed) VALUES (?, ?)", exercises)
+            conn.commit()
 
-from flask import Flask, render_template, request, redirect, url_for
-import sqlite3
+# Add default exercises if the table is empty
+add_default_exercises()
 
-app = Flask(__name__)
-
-# Initialize database
-def init_db():
-    conn = sqlite3.connect("exercise_tracker.db")
-    cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS exercises (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        day TEXT,
-                        session INTEGER,
-                        exercise TEXT,
-                        completed INTEGER DEFAULT 0
-                    )''')
-    conn.commit()
-    conn.close()
-
-init_db()
-
-# Exercise Schedule
-EXERCISE_PLAN = {
-    "Monday": [(1, "Chest Press w/ Step (M) R30"), (1, "Tension Curls (UF) R30"),
-                (2, "Chest Fly w/ Step (M) R30"), (2, "Upright Row (Bar) B50"),
-                (3, "Hammer Ten Curl (UF) R30"), (3, "Shoulder Shrug (Bar) B50")],
-    "Tuesday": [(1, "Tension Press (M) R30"), (1, "Rev Tension Curl (UF) R30"),
-                 (2, "Ntrl Grip Tension Pr (M) R30"), (2, "Shoulder Press (Bar) B50"),
-                 (3, "Low Tension Kickback (L) R30"), (3, "Tension Front Raises (L) Y10")]
-}
-
-# Populate database
-def populate_db():
-    conn = sqlite3.connect("exercise_tracker.db")
-    cursor = conn.cursor()
-    for day, exercises in EXERCISE_PLAN.items():
-        for session, exercise in exercises:
-            cursor.execute("INSERT OR IGNORE INTO exercises (day, session, exercise) VALUES (?, ?, ?)", (day, session, exercise))
-    conn.commit()
-    conn.close()
-
-populate_db()
-
+# Route to display the exercise tracker
 @app.route("/")
 def index():
-    conn = sqlite3.connect("exercise_tracker.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM exercises")
-    exercises = cursor.fetchall()
-    conn.close()
+    with sqlite3.connect("exercise.db") as conn:
+        cursor = conn.execute("SELECT * FROM exercises")
+        exercises = cursor.fetchall()
     return render_template("index.html", exercises=exercises)
 
+# Route to update checkbox state
 @app.route("/update", methods=["POST"])
 def update():
-    @app.route("/reset", methods=["POST"])
+    exercise_id = request.form["exercise_id"]
+    completed = 1 if "completed" in request.form else 0
+
+    with sqlite3.connect("exercise.db") as conn:
+        conn.execute("UPDATE exercises SET completed = ? WHERE id = ?", (completed, exercise_id))
+        conn.commit()
+
+    return redirect("/")
+
+# Route to reset all checkboxes
+@app.route("/reset", methods=["POST"])
 def reset():
     with sqlite3.connect("exercise.db") as conn:
         conn.execute("UPDATE exercises SET completed = 0")
         conn.commit()
     return redirect("/")
 
-    exercise_id = request.form["exercise_id"]
-    completed = 1 if request.form.get("completed") == "on" else 0
-    conn = sqlite3.connect("exercise_tracker.db")
-    cursor = conn.cursor()
-    cursor.execute("UPDATE exercises SET completed = ? WHERE id = ?", (completed, exercise_id))
-    conn.commit()
-    conn.close()
-    return redirect(url_for("index"))
-
 if __name__ == "__main__":
-    app.run(debug=True)
-
-import os
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
