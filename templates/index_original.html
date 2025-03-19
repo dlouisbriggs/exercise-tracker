@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            font-size: 18px;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        input[type="checkbox"] {
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+        }
+        button {
+            background-color: red;
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        form {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Exercise Tracker</h1>
+
+    <!-- Reset Button -->
+    <form method="POST" action="/reset">
+        <button type="submit">Reset Week</button>
+    </form>
+
+    <ul>
+        {% for exercise in exercises %}
+            <li>
+                <form method="POST" action="/update">
+                    <input type="hidden" name="exercise_id" value="{{ exercise[0] }}">
+                    <input type="checkbox" name="completed" {% if exercise[2] == 1 %}checked{% endif %} 
+                           onchange="this.form.submit()">
+                </form>
+                <span>{{ exercise[1] }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

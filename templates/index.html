@@ -7,7 +7,17 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            text-align: left;
+            padding: 20px;
+        }
+        h1 {
             text-align: center;
+        }
+        h2 {
+            font-size: 22px;
+            font-weight: bold;
+            text-decoration: underline;
+            margin-top: 20px;
         }
         ul {
             list-style-type: none;
@@ -15,16 +25,15 @@
         }
         li {
             font-size: 18px;
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+            padding: 5px 0;
             display: flex;
             align-items: center;
-            justify-content: space-between;
         }
         input[type="checkbox"] {
-            width: 25px;
-            height: 25px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
+            margin-right: 10px;
         }
         button {
             background-color: red;
@@ -35,8 +44,11 @@
             cursor: pointer;
             margin-bottom: 20px;
         }
-        form {
-            display: inline;
+        .exercise {
+            font-size: 18px;
+        }
+        .session-break {
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -48,17 +60,23 @@
         <button type="submit">Reset Week</button>
     </form>
 
-    <ul>
-        {% for exercise in exercises %}
-            <li>
-                <form method="POST" action="/update">
-                    <input type="hidden" name="exercise_id" value="{{ exercise[0] }}">
-                    <input type="checkbox" name="completed" {% if exercise[2] == 1 %}checked{% endif %} 
-                           onchange="this.form.submit()">
-                </form>
-                <span>{{ exercise[1] }}</span>
-            </li>
-        {% endfor %}
-    </ul>
+    {% for day, exercises in exercises_by_day.items() %}
+        <h2>{{ day }}</h2>
+        <ul>
+            {% for exercise in exercises %}
+                <li>
+                    <form method="POST" action="/update">
+                        <input type="hidden" name="exercise_id" value="{{ exercise[0] }}">
+                        <input type="checkbox" name="completed" {% if exercise[4] == 1 %}checked{% endif %}
+                               onchange="this.form.submit()">
+                    </form>
+                    <span class="exercise">🟡 <strong>{{ exercise[2] }}</strong> > {{ exercise[3] }}</span>
+                </li>
+                {% if loop.index % 4 == 0 %}
+                    <div class="session-break"></div>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endfor %}
 </body>
 </html>

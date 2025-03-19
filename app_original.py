@@ -10,8 +10,6 @@ def init_db():
         conn.execute("""
         CREATE TABLE IF NOT EXISTS exercises (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            day TEXT NOT NULL,
-            muscle_group TEXT NOT NULL,
             name TEXT NOT NULL,
             completed INTEGER DEFAULT 0
         )""")
@@ -28,27 +26,20 @@ def add_default_exercises():
         count = cursor.fetchone()[0]
         if count == 0:  # If no exercises exist, add them
             exercises = [
-                ("Monday", "Chest", "00:06 Chest Press w/ Step (M) R30", 0),
-                ("Monday", "Arms", "28:39 Tension Curls (UF) R30", 0),
-                ("Monday", "Legs", "44:56 Lat Lunge Archer Row (M)", 0),
-                ("Monday", "Hang", "Hang", 0),
-
-                ("Monday", "Chest", "00:35 Chest Fly w/ Step (M) R30", 0),
-                ("Monday", "Shoulders", "12:39 Upright Row (Bar) B50", 0),
-                ("Monday", "Back", "07:29 Standing Tens’n Rw (M) R30", 0),
-                ("Monday", "Hang", "Hang", 0),
-
-                ("Monday", "Arms", "31:02 Hammer Ten Curl (UF) R30", 0),
-                ("Monday", "Shoulders", "18:14 Shoulder Shrug (Bar) B50", 0),
-                ("Monday", "Plank", "Plank", 0),
-                ("Monday", "Hang", "Hang", 0),
-
-                ("Tuesday", "Chest", "01:09 Tension Press (M) R30", 0),
-                ("Tuesday", "Arms", "32:04 Rev Tension Curl (UF) R30", 0),
-                ("Tuesday", "Legs", "46:03 Squat Lifting Twist (L)", 0),
-                ("Tuesday", "Hang", "Hang", 0)
+                ("Chest Press w/ Step (M) R30", 0),
+                ("Tension Curls (UF) R30", 0),
+                ("Chest Fly w/ Step (M) R30", 0),
+                ("Upright Row (Bar) B50", 0),
+                ("Hammer Ten Curl (UF) R30", 0),
+                ("Shoulder Shrug (Bar) B50", 0),
+                ("Tension Press (M) R30", 0),
+                ("Rev Tension Curl (UF) R30", 0),
+                ("Ntrl Grip Tension Pr (M) R30", 0),
+                ("Shoulder Press (Bar) B50", 0),
+                ("Low Tension Kickback (L) R30", 0),
+                ("Tension Front Raises (L) Y10", 0)
             ]
-            conn.executemany("INSERT INTO exercises (day, muscle_group, name, completed) VALUES (?, ?, ?, ?)", exercises)
+            conn.executemany("INSERT INTO exercises (name, completed) VALUES (?, ?)", exercises)
             conn.commit()
 
 # Add default exercises if the table is empty
@@ -58,18 +49,9 @@ add_default_exercises()
 @app.route("/")
 def index():
     with sqlite3.connect("exercise.db") as conn:
-        cursor = conn.execute("SELECT * FROM exercises ORDER BY day, id")
+        cursor = conn.execute("SELECT * FROM exercises")
         exercises = cursor.fetchall()
-
-    # Organize exercises by day
-    exercises_by_day = {}
-    for exercise in exercises:
-        day = exercise[1]
-        if day not in exercises_by_day:
-            exercises_by_day[day] = []
-        exercises_by_day[day].append(exercise)
-
-    return render_template("index.html", exercises_by_day=exercises_by_day)
+    return render_template("index.html", exercises=exercises)
 
 # Route to update checkbox state
 @app.route("/update", methods=["POST"])
