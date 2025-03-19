@@ -7,76 +7,66 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: left;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
+            margin: 20px;
         }
         h2 {
-            font-size: 22px;
-            font-weight: bold;
-            text-decoration: underline;
             margin-top: 20px;
+            text-decoration: underline;
         }
-        ul {
-            list-style-type: none;
-            padding: 0;
+        .exercise-group {
+            margin-bottom: 15px; /* Space between exercise groups */
         }
-        li {
-            font-size: 18px;
-            padding: 5px 0;
-            display: flex;
-            align-items: center;
-        }
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        button {
+        .reset-btn {
             background-color: red;
             color: white;
             padding: 10px;
-            font-size: 16px;
             border: none;
             cursor: pointer;
-            margin-bottom: 20px;
-        }
-        .exercise {
-            font-size: 18px;
-        }
-        .session-break {
-            margin-bottom: 15px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <h1>Exercise Tracker</h1>
 
     <!-- Reset Button -->
-    <form method="POST" action="/reset">
-        <button type="submit">Reset Week</button>
+    <form action="/reset" method="post">
+        <button class="reset-btn">Reset Week</button>
     </form>
 
-    {% for day, exercises in exercises_by_day.items() %}
-        <h2>{{ day }}</h2>
-        <ul>
-            {% for exercise in exercises %}
-                <li>
-                    <form method="POST" action="/update">
-                        <input type="hidden" name="exercise_id" value="{{ exercise[0] }}">
-                        <input type="checkbox" name="completed" {% if exercise[4] == 1 %}checked{% endif %}
-                               onchange="this.form.submit()">
-                    </form>
-                    <span class="exercise">🟡 <strong>{{ exercise[2] }}</strong> > {{ exercise[3] }}</span>
-                </li>
-                {% if loop.index % 4 == 0 %}
-                    <div class="session-break"></div>
-                {% endif %}
-            {% endfor %}
-        </ul>
+    {% set current_day = None %}
+    {% set count = 0 %}
+
+    {% for exercise in exercises %}
+        {% if exercise[1] != current_day %}
+            <!-- Print the day name -->
+            {% if current_day is not none %}</div>{% endif %}
+            <h2><strong>{{ exercise[1] }}</strong></h2>
+            <div class="exercise-group">
+            {% set current_day = exercise[1] %}
+            {% set count = 0 %}
+        {% endif %}
+
+        <!-- Exercise Checkbox -->
+        <label>
+            <input type="checkbox" onchange="updateExercise({{ exercise[0] }})" {% if exercise[4] %}checked{% endif %}>
+            <strong>{{ exercise[2] }}</strong> > {{ exercise[3] }}
+        </label>
+        <br>
+
+        {% set count = count + 1 %}
+        {% if count % 4 == 0 %}
+            </div><div class="exercise-group">
+        {% endif %}
     {% endfor %}
+    </div>
+
+    <script>
+        function updateExercise(id) {
+            fetch(`/update/${id}`, { method: "POST" }).then(() => {
+                console.log(`Exercise ${id} updated`);
+            });
+        }
+    </script>
+
 </body>
 </html>
