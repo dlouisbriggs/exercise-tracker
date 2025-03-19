@@ -1,3 +1,23 @@
+import sqlite3
+import os
+
+app = Flask(__name__)
+
+# Function to create database if it doesn't exist
+def init_db():
+    with sqlite3.connect("exercise.db") as conn:
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS exercises (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            completed INTEGER DEFAULT 0
+        )""")
+        conn.commit()
+
+# Ensure the database and table exist before starting the app
+init_db()
+
+
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 
@@ -52,6 +72,13 @@ def index():
 
 @app.route("/update", methods=["POST"])
 def update():
+    @app.route("/reset", methods=["POST"])
+def reset():
+    with sqlite3.connect("exercise.db") as conn:
+        conn.execute("UPDATE exercises SET completed = 0")
+        conn.commit()
+    return redirect("/")
+
     exercise_id = request.form["exercise_id"]
     completed = 1 if request.form.get("completed") == "on" else 0
     conn = sqlite3.connect("exercise_tracker.db")
